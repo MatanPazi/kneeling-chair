@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kneeling Chair Beam Length Calculator</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f4f4;margin:0;padding:24px;color:#222}
+.container{max-width:900px;margin:auto;background:white;padding:28px;border-radius:12px;box-shadow:0 2px 12px #0001}
+h1{margin-top:0}.intro{color:#555}
+.diagram{text-align:center;margin:24px 0}.diagram img{max-width:100%;height:auto;border-radius:8px}
+.placeholder{border:2px dashed #bbb;padding:50px 20px;color:#777;border-radius:8px}
+.calculator{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px}
+label{display:block;font-weight:bold;margin-bottom:6px}
+input{width:100%;padding:10px 12px;font-size:16px;border:1px solid #bbb;border-radius:6px}
+.result{grid-column:1/-1;margin-top:8px;padding:20px;background:#eef6ff;border-radius:8px;text-align:center}
+.result-label{color:#555}.result-value{font-size:36px;font-weight:bold;margin-top:5px}
+.details{margin-top:24px;padding-top:20px;border-top:1px solid #ddd}
+code{background:#f1f1f1;padding:2px 5px;border-radius:4px}.error{color:#b00020;font-weight:bold}
+@media(max-width:650px){body{padding:10px}.container{padding:18px}.calculator{grid-template-columns:1fr}.result{grid-column:auto}}
+</style>
+</head>
+<body>
+<main class="container">
+<h1>Kneeling Chair Beam Length Calculator</h1>
+<p class="intro">Enter your dimensions. All dimensions are in centimeters.</p>
+
+<div class="diagram">
+  <img src="images/kneeling-chair.png"
+       alt="Side view of kneeling chair"
+       onerror="this.style.display='none';document.getElementById('placeholder').style.display='block';">
+  <div id="placeholder" class="placeholder" style="display:none">
+    Add your diagram as <strong>images/kneeling-chair.png</strong>
+  </div>
+</div>
+
+<section class="calculator">
+<div><label for="femur">Femur length (F), cm</label><input id="femur" type="number" min="0" step="0.1" value="45"></div>
+<div><label for="tibia">Tibia length (T), cm</label><input id="tibia" type="number" min="0" step="0.1" value="42"></div>
+<div><label for="foot">Foot length (FO), cm</label><input id="foot" type="number" min="0" step="0.1" value="27"></div>
+<div><label for="crossSection">Beam cross section (CS), cm</label><input id="crossSection" type="number" min="0" step="0.1" value="5"></div>
+<div><label for="wheelHeight">Wheel height (W), cm</label><input id="wheelHeight" type="number" min="0" step="0.1" value="11"></div>
+
+<div class="result">
+<div class="result-label">Beam length (L)</div>
+<div class="result-value"><span id="beamLength">—</span> cm</div>
+<div id="error" class="error"></div>
+</div>
+</section>
+
+<section class="details">
+<h2>Calculation</h2>
+<p>Height from the user's dimensions:</p>
+<p><code>H = F × sin(22.5°) + T × sin(22.5°) + FO × cos(22.5°)</code></p>
+<p>With a 5 cm safety margin:</p>
+<p><code>H_beam = H − 5</code></p>
+<p>Height provided by the beam:</p>
+<p><code>H_beam = L × cos(22.5°) + CS + W</code></p>
+<p>Therefore:</p>
+<p><code>L = (H − 5 − CS − W) / cos(22.5°)</code></p>
+</section>
+</main>
+
+<script>
+const SAFETY_MARGIN = 5;
+const ANGLE = 22.5 * Math.PI / 180;
+
+const ids = ["femur","tibia","foot","crossSection","wheelHeight"];
+
+function calculate() {
+  const v = Object.fromEntries(ids.map(id => [id, Number(document.getElementById(id).value)]));
+  const output = document.getElementById("beamLength");
+  const error = document.getElementById("error");
+
+  if (!Object.values(v).every(Number.isFinite) || Object.values(v).some(x => x < 0)) {
+    output.textContent = "—";
+    error.textContent = "Please enter valid non-negative numbers.";
+    return;
+  }
+
+  const H =
+    v.femur * Math.sin(ANGLE) +
+    v.tibia * Math.sin(ANGLE) +
+    v.foot * Math.cos(ANGLE);
+
+  const L =
+    (H - SAFETY_MARGIN - v.crossSection - v.wheelHeight) /
+    Math.cos(ANGLE);
+
+  if (L <= 0) {
+    output.textContent = "—";
+    error.textContent = "These dimensions result in a non-positive beam length. Check the inputs.";
+    return;
+  }
+
+  error.textContent = "";
+  output.textContent = L.toFixed(1);
+}
+
+ids.forEach(id => document.getElementById(id).addEventListener("input", calculate));
+calculate();
+</script>
+</body>
+</html>
